@@ -3,11 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { StaffWorkspace } from "@/components/staff/staff-workspace";
 import { getQueueMonitorData } from "@/lib/queries/queues";
+import { getLocale } from "@/lib/i18n-server";
+import { localizeName, translate } from "@/lib/i18n";
 
 export default async function AdminCallQueuePage({
   searchParams,
 }: PageProps<"/admin/call">) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const t = (th: string, ms: string) => translate(locale, th, ms);
   const { counters, queues } = await getQueueMonitorData();
   const requestedCounterId = typeof query.counter === "string" ? query.counter : null;
   const counter = counters.find((item) => item.id === requestedCounterId) ?? counters[0];
@@ -15,10 +19,10 @@ export default async function AdminCallQueuePage({
   if (!counter) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight">เรียกคิว</h1>
+        <h1 className="text-2xl font-bold tracking-tight">{t("เรียกคิว", "Panggil giliran")}</h1>
         <Card className="border-dashed">
           <CardContent className="py-8 text-center text-sm text-muted-foreground">
-            ยังไม่มีจุดให้บริการที่เปิดใช้งาน
+            {t("ยังไม่มีจุดให้บริการที่เปิดใช้งาน", "Tiada kaunter aktif")}
           </CardContent>
         </Card>
       </div>
@@ -31,11 +35,13 @@ export default async function AdminCallQueuePage({
   ) ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">เรียกคิว</h1>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("จัดการคิวหน้าช่อง", "Pengurusan giliran kaunter")}</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">{t("เรียกคิว", "Panggil giliran")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("เลือกช่องบริการ แล้วเรียกคิวตามลำดับที่รออยู่", "Pilih kaunter, kemudian panggil giliran mengikut turutan")}</p>
         {counters.length > 1 && (
-          <div className="mt-3 flex flex-wrap gap-2" aria-label="เลือกจุดให้บริการ">
+          <div className="mt-5 flex flex-wrap gap-2" aria-label={t("เลือกจุดให้บริการ", "Pilih kaunter")}>
             {counters.map((item) => (
               <Link
                 key={item.id}
@@ -45,7 +51,7 @@ export default async function AdminCallQueuePage({
                   size: "sm",
                 })}
               >
-                {item.name}
+                {localizeName(item.name, locale)}
               </Link>
             ))}
           </div>

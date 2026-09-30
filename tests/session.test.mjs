@@ -65,9 +65,13 @@ test("customer ownership is restricted to the signed queue and cannot become a s
   assert.equal(await auth.canReadQueue(own), false);
   await auth.grantQueueAccess(own);
   assert.equal(await auth.canReadQueue(own), true);
+  assert.equal(await auth.getLatestQueueId(), own);
+  assert.equal(options.get(`qflow_queue_${own}`).maxAge, 32 * 24 * 60 * 60);
   assert.equal(await auth.canReadQueue(other), false);
   jar.set(`qflow_queue_${other}`, jar.get(`qflow_queue_${own}`));
   assert.equal(await auth.canReadQueue(other), false);
+  jar.set("qflow_latest_queue", jar.get(`qflow_queue_${own}`));
+  assert.equal(await auth.getLatestQueueId(), null);
   jar.set("qflow_session", jar.get(`qflow_queue_${own}`));
   assert.equal(await auth.getSession(), null);
   await auth.setSession(admin);

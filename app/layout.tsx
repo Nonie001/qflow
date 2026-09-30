@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Prompt } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { LanguageProvider } from "@/components/language-provider";
+import { getLocale } from "@/lib/i18n-server";
 import "./globals.css";
 
 const prompt = Prompt({
@@ -9,17 +11,24 @@ const prompt = Prompt({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "QFlow - ระบบจองคิว",
-  description: "ระบบรับคิวและติดตามสถานะคิว",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  return {
+    title: locale === "ms" ? "QFlow | Bina Islamic Cooperative" : "QFlow | สหกรณ์อิสลามบีนา จำกัด",
+    description: locale === "ms" ? "Tempah dan semak giliran di Bina Islamic Cooperative" : "ระบบรับคิวและติดตามสถานะคิวของสหกรณ์อิสลามบีนา จำกัด",
+    icons: { icon: "/bina-logo.jpg" },
+  };
+}
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
   return (
-    <html lang="th" className={`${prompt.variable} h-full antialiased`}>
+    <html lang={locale === "ms" ? "ms-MY" : "th"} className={`${prompt.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        {children}
-        <Toaster richColors position="top-center" />
+        <LanguageProvider initialLocale={locale}>
+          {children}
+          <Toaster richColors position="top-center" />
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,59 +1,47 @@
-# QFlow
+# Bina Queue
 
-ระบบรับคิวสำหรับสาขาเดียว ใช้ Next.js 16, React 19 และ Google Sheets ผ่าน Google Apps Script ไม่มี dependency หรือบริการ Supabase
+ระบบจองและเรียกคิวของสหกรณ์อิสลามบีนา จำกัด สร้างด้วย Next.js 16 และ Supabase PostgreSQL ลูกค้าเปิดหน้าเว็บจากริชเมนู LINE OA เพื่อจองคิวล่วงหน้าได้ 30 วัน เจ้าหน้าที่เรียกคิวและเปิดจอ TV จากเว็บเดียวกัน
 
-## เริ่มใช้งาน
+## เริ่มใช้งานกับ Supabase
 
-1. ใช้ Node.js 22 ขึ้นไป แล้วรัน `npm install`
-2. สร้าง Google Sheet ส่วนตัวสำหรับ QFlow โดยเฉพาะ ไม่ต้องแชร์ให้ลูกค้า และไม่ต้อง Publish to web
-3. เปิด Extensions → Apps Script แล้ววางโค้ดจาก `google-apps-script/Code.gs`
-4. ใน Project Settings → Script Properties ตั้งค่า:
-   - `SPREADSHEET_ID`: ส่วนระหว่าง `/d/` และ `/edit` ใน URL ของชีต
-   - `API_SECRET`: ค่าสุ่มอย่างน้อย 32 ตัวอักษร สร้างด้วย `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`
-5. ตั้ง timezone เป็น Asia/Bangkok และใช้ V8 runtime (มี manifest ตัวอย่างที่ `google-apps-script/appsscript.json`)
-6. เลือกฟังก์ชัน `setup` แล้วกด Run และอนุญาตการเข้าถึง Sheets สคริปต์จะสร้างแท็บและบริการตัวอย่าง รันซ้ำได้โดยไม่ลบข้อมูลเดิม
-7. Deploy → New deployment → Web app → Execute as **Me**, Who has access **Anyone** แล้วคัดลอก URL ที่ลงท้าย `/exec` ทุกคำขอต้องมี secret ที่ส่งจาก Next.js server จึงอ่าน/เขียนได้ หากองค์กรไม่อนุญาต deployment แบบนี้ต้องให้ผู้ดูแล Google Workspace เปิดสิทธิ์ก่อน
-8. คัดลอก `.env.example` เป็น `.env.local` ตั้ง `GOOGLE_APPS_SCRIPT_URL` และ `GOOGLE_APPS_SCRIPT_SECRET` ให้ตรงกับ deployment และ `API_SECRET`
-9. สร้าง `SESSION_SECRET` ด้วยคำสั่งสุ่มด้านบนอีกครั้ง ใช้คนละค่ากับ API secret
-10. ตั้งบัญชีแอดมินหนึ่งบัญชีใน `.env.local` เช่น `ADMIN_USERNAME=admin` และ `ADMIN_PASSWORD=1234` ควรเปลี่ยนเป็นรหัสที่คาดเดายากก่อนนำขึ้นใช้งานจริง
-11. รัน `npm run dev` แล้วเปิด http://localhost:3000
+1. สร้างโปรเจกต์ใน [Supabase](https://supabase.com/dashboard) แล้วเปิด **SQL Editor** รันไฟล์ [`supabase/migrations/001_initial.sql`](supabase/migrations/001_initial.sql) และ [`supabase/migrations/002_api.sql`](supabase/migrations/002_api.sql) ตามลำดับ โค้ดนี้สร้างตารางและคำสั่ง API สำหรับระบบคิว
+2. คัดลอก `.env.example` เป็น `.env.local` แล้วใส่ `SUPABASE_URL` และ `SUPABASE_SERVICE_ROLE_KEY` จากโปรเจกต์ Supabase รวมทั้ง `SESSION_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` ระบบเรียก Supabase API จาก Next.js server เท่านั้น
+3. หากต้องการใช้ PostgreSQL โดยตรงแทน API สามารถตั้ง `DATABASE_URL` จากเมนู **Connect** ใน Supabase ได้ ระบบจะเลือกการเชื่อมต่อแบบนี้ก่อนเมื่อมีตัวแปรดังกล่าว
+4. รัน `npm install` และ `npm run db:check` เพื่อเช็กการเชื่อมต่อและตาราง แล้วรัน `npm run dev` เปิด http://localhost:3000
+5. เข้าสู่ระบบที่ `/staff/login` แล้วเพิ่มบริการและช่องบริการใน `/admin/services`
 
-เมื่อ deploy เว็บจริง ให้ตั้ง environment variables เดียวกันบน hosting และใช้ HTTPS สำหรับ session cookies และ Web Push เมื่อแก้ Apps Script ให้ Deploy → Manage deployments → Edit → New version → Deploy โดยคง URL เดิม
+หากใช้ `.env.local` เดิม ให้เพิ่ม `SUPABASE_URL` และ `SUPABASE_SERVICE_ROLE_KEY` เข้าไป เมื่อ Deploy เว็บจริงให้ตั้งตัวแปร Supabase บน hosting ด้วย ข้อมูลบริการ ช่องบริการ คิว การสมัครแจ้งเตือน และประวัติการแจ้งเตือนทั้งหมดเก็บใน Supabase
 
-## หน้าการใช้งาน
+## หน้าใช้งาน
 
-- `/` และ `/queue`: ลูกค้ากรอกชื่อและเลือกบริการเพื่อรับคิว ไม่มีเมนูส่วนเจ้าหน้าที่
-- `/queue/[id]`: ดูคิวของตนเอง ต้องใช้เบราว์เซอร์ที่รับคิว มีคุกกี้ HttpOnly ลงลายเซ็นอายุ 48 ชั่วโมง การส่ง URL ให้คนอื่นจะไม่ให้สิทธิ์ดูคิว
-- `/staff/login`: ล็อกอินเจ้าหน้าที่และ admin
-- `/admin/call`: เรียก/เรียกซ้ำ/เริ่ม/จบ/ข้ามคิวภายในหน้าแอดมิน
-- `/admin`: รายงานวันนี้ จัดการบริการ และดูคิวทั้งหมด
-- `/display`: จอ TV ต้องล็อกอิน staff/admin บนอุปกรณ์นั้นก่อน
+- `/` และ `/queue`: ลูกค้ากรอกชื่อ เลือกบริการและวันภายใน 30 วันเพื่อรับคิว
+- `/queue/[id]`: หน้าคิวส่วนตัว เปิดได้เฉพาะเบราว์เซอร์ที่มีคุกกี้คิวซึ่งลงลายเซ็นไว้ หรือเจ้าหน้าที่ที่ล็อกอิน
+- `/staff/login`: เข้าสู่ระบบแอดมินด้วยบัญชีใน environment
+- `/admin/call`: เรียก เริ่มบริการ จบ ข้าม หรือเรียกซ้ำ
+- `/admin/services`: จัดการบริการและช่องบริการ
+- `/admin/queues`: คิววันนี้และคิวจองล่วงหน้า
+- `/display`: จอ TV สำหรับเจ้าหน้าที่ แสดงเลขคิว ชื่อผู้รับบริการ และช่องบริการ
+- `/about`: ข้อมูลสหกรณ์
 
-ระบบมีบัญชีแอดมินจาก environment เพียงบัญชีเดียว รหัสผ่านไม่ถูกส่งไปฝั่ง client และไม่เก็บในชีต Session อายุ 8 ชั่วโมง เมื่อเปลี่ยนชื่อผู้ใช้หรือรหัสผ่านใน environment แล้ว session เดิมจะใช้ไม่ได้ การล็อกอินจำกัด 10 ครั้งต่อชื่อผู้ใช้ในช่วงพัก 15 นาทีด้วย Apps Script CacheService (เป็นการจำกัดแบบ best effort เพราะ Google อาจล้าง cache ก่อนกำหนด) รหัส `1234` เหมาะสำหรับทดสอบในเครื่องเท่านั้น ก่อนเปิดเว็บสาธารณะควรใช้รหัสที่คาดเดายากและตั้ง rate limit เพิ่มที่ hosting/WAF
+จอ TV และหน้าเรียกคิวตรวจข้อมูลใหม่ทุก 2 วินาทีเมื่อแท็บเปิดอยู่ หน้าคิวลูกค้าตรวจทุก 5 วินาที PostgreSQL ใช้ transaction และ row lock เพื่อให้การออกเลขคิวต่อบริการ/วันไม่ซ้ำ และไม่ให้สองช่องเรียกคิวเดียวกันพร้อมกัน ความเร็วจริงขึ้นกับ hosting และตำแหน่งที่ตั้งของ Supabase ด้วย
 
-## ข้อมูลและการอัปเดต
+## ใช้จาก LINE Official Account
 
-แท็บ `services`, `counters`, `queues`, `push_subscriptions`, `notifications` สร้างโดย `setup()` ห้ามเปลี่ยนหัวคอลัมน์/ลบแถวคิว/แก้คิวด้วยมือขณะระบบทำงาน ให้จัดการผ่านเว็บเพื่อให้ทุกการเขียนผ่าน ScriptLock เดียวกัน เมื่ออัปเดตจากรุ่นเดิมให้รัน `setup()` อีกครั้งเพื่อเพิ่มคอลัมน์ชื่อผู้รับบริการโดยไม่ลบข้อมูลเดิม ตัวเลขคิวแยกตามบริการและวันไทย การเรียกคิวรวมเรียงตามเวลามาถึง ช่องหนึ่งมีคิวที่กำลังเรียก/ให้บริการได้ครั้งละหนึ่งคิว
+นำเว็บขึ้น HTTPS แล้วตั้งริชเมนู LINE OA ให้เปิด `https://โดเมนของคุณ/queue` หรือเพิ่มเมนูเกี่ยวกับสหกรณ์ไปที่ `/about` รูปแบบนี้เปิดหน้าเว็บโดยตรง ไม่ต้องใช้ LIFF หรือ LINE Login การติดตามคิวต้องใช้เบราว์เซอร์เดิมที่รับคิว หากกดเมนูรับคิวอีกครั้งจะมีลิงก์กลับไปยังคิวล่าสุด
 
-หน้าเจ้าหน้าที่ จอ TV และหน้าคิวลูกค้าตรวจอัปเดตทุก 10 วินาทีเฉพาะแท็บที่เปิดอยู่ ความหน่วงจริงขึ้นกับ Google Apps Script และเครือข่าย ไม่ใช่ realtime websocket หน้าลูกค้าแจ้งเตือนเมื่ออัปเดตไม่สำเร็จ ส่วนรายงาน admin โหลดใหม่เมื่อเปิด/รีเฟรชหน้า
+## ความปลอดภัยและการแจ้งเตือน
 
-การรับคิวมี request ID สำหรับ retry คำขอเดิมภายในหน้าที่เปิดอยู่ จึงไม่ออกคิวซ้ำเมื่อคำขอแรกสำเร็จแต่การตอบกลับขาดหาย การเรียกคิวซ้ำที่ช่องเดิมจะคืนคิวที่ยังให้บริการอยู่ การเขียน Sheets หลายครั้งไม่ใช่ transaction แบบฐานข้อมูล จึงควรสำรองชีตและไม่ใช้กับภาระงานสูงโดยไม่ทดสอบปริมาณงานจริง
+`SUPABASE_SERVICE_ROLE_KEY` หรือ `DATABASE_URL` เป็นค่าฝั่ง server ห้ามใส่ในตัวแปร `NEXT_PUBLIC_` ตารางเปิด RLS และไม่มี policy สำหรับ anon; หน้าเว็บอ่านข้อมูลผ่าน server action ที่ตรวจสิทธิ์ก่อน บัญชีแอดมินมีหนึ่งบัญชีจาก environment session อายุ 8 ชั่วโมงและเปลี่ยนรหัสผ่านแล้ว session เก่าจะใช้ไม่ได้ การลองล็อกอินจำกัด 10 ครั้งต่อชื่อผู้ใช้ในช่วง 15 นาทีด้วยตาราง `login_attempts`
 
-Next.js เท่านั้นที่เรียก Apps Script; secret ไม่ส่งไป browser ไม่มี API สาธารณะสำหรับอ่านตารางคิวทั้งหมด ไม่มี automatic retry สำหรับคำสั่งเขียน เพื่อหลีกเลี่ยงการเขียนซ้ำหลัง timeout
+Web Push เป็นตัวเลือกเสริม ตั้ง `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` หากต้องการแจ้งเตือนเมื่อรับคิว ใกล้ถึงคิว หรือถูกเรียก การส่งทำหลังตอบคำสั่งคิวแล้วเพื่อไม่ให้ผู้ใช้รอ หากส่งไม่สำเร็จจะไม่ย้อนการดำเนินการคิว
 
-## Push notifications (ไม่บังคับ)
-
-รัน `npx web-push generate-vapid-keys` แล้วใส่ค่าลง environment ก่อน build เว็บ เมื่อลูกค้ารับคิวแล้วเปิดการแจ้งเตือน ระบบบันทึก subscription ในชีต รองรับหลายคิวต่อ browser endpoint และส่งแจ้งเตือนรับคิว/ใกล้ถึงคิว/ถูกเรียก การเรียกซ้ำประกาศบนจอ TV แต่ไม่ส่ง Push ซ้ำ Push เป็น best effort; การส่งล้มเหลวไม่ย้อนหรือทำให้คำสั่งคิวที่สำเร็จแล้วแสดงว่าล้มเหลว ไม่มี background worker สำหรับ retry หลังเซิร์ฟเวอร์หยุดทำงาน
-
-## การตรวจสอบ
+## ตรวจสอบ
 
 ```sh
 npm run lint
-npm run test
-npx tsc --noEmit --incremental false
+npm test
+npx tsc --noEmit
 npm run build
 ```
 
-ชุดทดสอบใช้ Apps Script/Sheets จำลองในหน่วยความจำ ครอบคลุมเลขคิว การ retry การเรียกคิวและเปลี่ยนสถานะ สิทธิ์ secret และ signed token ต้องทดสอบ deployment Google จริงอีกครั้งก่อนเปิดใช้งาน ไม่มีการย้ายข้อมูลจากระบบเก่าอัตโนมัติ
-
-เอกสาร Google: [Web Apps](https://developers.google.com/apps-script/guides/web), [LockService](https://developers.google.com/apps-script/reference/lock), [Script Properties](https://developers.google.com/apps-script/guides/properties), [Apps Script quotas](https://developers.google.com/apps-script/guides/services/quotas)
+ชุดทดสอบตรวจ schema PostgreSQL และกติกาคิวด้วยฐานข้อมูลจำลองในเครื่อง ควรทดสอบคำสั่งจอง เรียก และเปลี่ยนสถานะกับโปรเจกต์ Supabase จริงก่อนเปิดใช้งานกับสมาชิก

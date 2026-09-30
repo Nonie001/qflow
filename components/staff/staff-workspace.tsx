@@ -17,6 +17,8 @@ import {
   skipQueue,
 } from "@/lib/actions/staff-actions";
 import type { Counter, QueueWithRelations } from "@/lib/types/domain";
+import { useLanguage } from "@/components/language-provider";
+import { localizeError, localizeName } from "@/lib/i18n";
 
 interface Props {
   counter: Counter;
@@ -35,6 +37,7 @@ export function StaffWorkspace({
   waitingQueues,
 }: Props) {
   const router = useRouter();
+  const { t, locale } = useLanguage();
   const [isPending, startTransition] = useTransition();
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const serverVersion = `${currentQueue?.id ?? ""}:${currentQueue?.status ?? ""}:${currentQueue?.called_at ?? ""}:${waitingQueues.map((queue) => queue.id).join(",")}`;
@@ -64,7 +67,7 @@ export function StaffWorkspace({
       try {
         onSuccess(await fn());
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "ดำเนินการไม่สำเร็จ");
+        toast.error(err instanceof Error ? localizeError(err.message, locale) : t("ดำเนินการไม่สำเร็จ", "Tindakan gagal"));
       } finally {
         setBusyAction(null);
       }
@@ -74,7 +77,7 @@ export function StaffWorkspace({
   const handleCallNext = () =>
     run("call-next", () => callNextQueue(counter.id, counter.name), (queue) => {
       if (!queue) {
-        toast.info("ไม่มีคิวที่รออยู่");
+        toast.info(t("ไม่มีคิวที่รออยู่", "Tiada giliran menunggu"));
         return;
       }
       updateView((previous) => ({
@@ -107,29 +110,31 @@ export function StaffWorkspace({
   const waitingCount = view.waitingQueues.length;
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-      <Card>
+    <div className="grid w-full gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)] lg:items-start">
+      <Card className="shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>{counter.name}</span>
-            <Badge variant="secondary">คิวที่รอทั้งหมด {waitingCount}</Badge>
+          <CardTitle className="flex items-center justify-between gap-3 text-lg font-semibold">
+            <span>{t("คิวปัจจุบัน", "Giliran semasa")} · {localizeName(counter.name, locale)}</span>
+            <Badge variant="secondary" className="h-7 px-3">{t("รอ", "Menunggu")} {waitingCount} {t("คิว", "giliran")}</Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
           {activeQueue ? (
-            <div className="flex flex-col items-center gap-2 rounded-xl border border-primary/30 bg-linear-to-b from-primary/10 to-transparent py-7">
-              <p className="text-sm text-muted-foreground">{activeQueue.service?.name}</p>
-              <p className="text-5xl font-bold tabular-nums">{activeQueue.queue_number}</p>
-              <p className="text-base font-medium">{activeQueue.customer_name || "ไม่ระบุชื่อ"}</p>
-              <QueueStatusBadge status={activeQueue.status} />
+            <div className="flex flex-col items-center gap-2 rounded-2xl bg-[#104f36] py-9 text-white">
+              <span className="mb-2 h-1 w-10 rounded-full bg-[#e9be4c]" aria-hidden />
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#c2e9d0]">{localizeName(activeQueue.service?.name, locale)}</p>
+              <p className="text-6xl font-bold tracking-tight text-white tabular-nums">{activeQueue.queue_number}</p>
+              <p className="text-base font-medium text-[#e4f5e9]">{activeQueue.customer_name || t("ไม่ระบุชื่อ", "Tiada nama")}</p>
+              <QueueStatusBadge status={activeQueue.status} className="mt-2 border border-white/20 bg-white/15 text-white" />
             </div>
           ) : (
-            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-7 text-muted-foreground">
-              <p>ยังไม่มีคิวที่กำลังให้บริการ</p>
+            <div className="flex min-h-48 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-primary/25 bg-muted/30 text-muted-foreground">
+              <p className="text-sm">{t("ยังไม่มีคิวที่กำลังให้บริการ", "Tiada giliran sedang dilayan")}</p>
+              <p className="text-xs">{t("กดเรียกคิวถัดไปเพื่อเริ่มต้น", "Tekan panggil giliran seterusnya untuk bermula")}</p>
             </div>
           )}
 
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-6 flex flex-col gap-3">
             <Button
               size="lg"
               className="w-full"
@@ -141,7 +146,7 @@ export function StaffWorkspace({
               ) : (
                 <PhoneCall className="size-4" />
               )}
-              เรียกคิวถัดไป
+              {t("เรียกคิวถัดไป", "Panggil giliran seterusnya")}
             </Button>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               <Button
@@ -154,7 +159,7 @@ export function StaffWorkspace({
                 ) : (
                   <Repeat className="size-4" />
                 )}
-                เรียกซ้ำ
+                {t("เรียกซ้ำ", "Panggil semula")}
               </Button>
               <Button
                 variant="outline"
@@ -166,7 +171,7 @@ export function StaffWorkspace({
                 ) : (
                   <Play className="size-4" />
                 )}
-                เริ่มให้บริการ
+                {t("เริ่มให้บริการ", "Mula melayan")}
               </Button>
               <Button
                 variant="outline"
@@ -178,7 +183,7 @@ export function StaffWorkspace({
                 ) : (
                   <Check className="size-4" />
                 )}
-                เสร็จสิ้น
+                {t("เสร็จสิ้น", "Selesai")}
               </Button>
               <Button
                 variant="destructive"
@@ -190,27 +195,29 @@ export function StaffWorkspace({
                 ) : (
                   <SkipForward className="size-4" />
                 )}
-                ข้ามคิว
+                {t("ข้ามคิว", "Langkau")}
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="shadow-none">
         <CardHeader>
-          <CardTitle className="text-base">คิวที่กำลังรอ</CardTitle>
+          <CardTitle className="flex items-center justify-between text-base font-semibold">
+            <span>{t("คิวที่กำลังรอ", "Giliran menunggu")}</span><span className="text-xs font-normal text-muted-foreground">{waitingCount} {t("รายการ", "rekod")}</span>
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {view.waitingQueues.length === 0 ? (
-            <p className="text-sm text-muted-foreground">ไม่มีคิวที่รออยู่</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">{t("ไม่มีคิวที่รออยู่", "Tiada giliran menunggu")}</p>
           ) : (
             <ul className="divide-y">
               {view.waitingQueues.map((q) => (
-                <li key={q.id} className="flex items-center gap-3 py-2 text-sm">
-                  <span className="font-medium">{q.queue_number}</span>
-                  <span className="min-w-0 flex-1 truncate">{q.customer_name || "ไม่ระบุชื่อ"}</span>
-                  <span className="text-muted-foreground">{q.service?.name}</span>
+                <li key={q.id} className="flex items-center gap-3 py-3 text-sm">
+                  <span className="inline-flex min-w-15 justify-center rounded-lg bg-secondary px-2 py-1 font-bold text-primary">{q.queue_number}</span>
+                  <span className="min-w-0 flex-1 truncate">{q.customer_name || t("ไม่ระบุชื่อ", "Tiada nama")}</span>
+                  <span className="max-w-24 truncate text-xs text-muted-foreground">{localizeName(q.service?.name, locale)}</span>
                 </li>
               ))}
             </ul>

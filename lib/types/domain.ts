@@ -6,8 +6,6 @@ export type QueueStatus =
   | "skipped"
   | "cancelled";
 
-export type ProfileRole = "staff" | "admin";
-
 export type NotificationType =
   | "queue_created"
   | "queue_almost_ready"
@@ -25,13 +23,6 @@ export interface Counter {
   id: string;
   name: string;
   is_active: boolean;
-  created_at: string;
-}
-
-export interface Profile {
-  id: string;
-  role: ProfileRole;
-  full_name: string | null;
   created_at: string;
 }
 
@@ -64,13 +55,6 @@ export interface PushSubscriptionRow {
   created_at: string;
 }
 
-export interface NotificationRow {
-  id: string;
-  queue_id: string;
-  type: NotificationType;
-  sent_at: string;
-}
-
 export const QUEUE_STATUS_LABEL_TH: Record<QueueStatus, string> = {
   waiting: "รอเรียก",
   called: "ถูกเรียกแล้ว",
@@ -79,5 +63,3 @@ export const QUEUE_STATUS_LABEL_TH: Record<QueueStatus, string> = {
   skipped: "ข้ามคิว",
   cancelled: "ยกเลิก",
 };
-
-export const ALMOST_READY_THRESHOLD = 3;

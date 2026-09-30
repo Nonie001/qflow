@@ -1,5 +1,9 @@
+"use client";
+
 import { Badge } from "@/components/ui/badge";
-import { QUEUE_STATUS_LABEL_TH, type QueueStatus } from "@/lib/types/domain";
+import { type QueueStatus } from "@/lib/types/domain";
+import { STATUS_LABELS } from "@/lib/i18n";
+import { useLanguage } from "@/components/language-provider";
 
 const STATUS_BADGE_CLASS: Record<QueueStatus, string> = {
   waiting: "bg-secondary text-secondary-foreground",
@@ -19,10 +23,11 @@ export function QueueStatusBadge({
   className?: string;
   children?: React.ReactNode;
 }) {
+  const { locale } = useLanguage();
   return (
     <Badge className={`gap-1.5 ${STATUS_BADGE_CLASS[status]} ${className ?? ""}`}>
       {children}
-      {QUEUE_STATUS_LABEL_TH[status]}
+      {STATUS_LABELS[locale][status]}
     </Badge>
   );
 }

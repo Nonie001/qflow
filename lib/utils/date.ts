@@ -10,6 +10,21 @@ export function todayInBangkok(): string {
   }).format(new Date());
 }
 
+export function addDaysToDate(date: string, days: number): string {
+  const result = new Date(`${date}T00:00:00Z`);
+  result.setUTCDate(result.getUTCDate() + days);
+  return result.toISOString().slice(0, 10);
+}
+
+export function formatDateTH(date: string): string {
+  return new Intl.DateTimeFormat("th-TH", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
 export function formatTimeTH(iso: string | null): string {
   if (!iso) return "-";
   return new Intl.DateTimeFormat("th-TH", {

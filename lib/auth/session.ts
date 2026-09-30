@@ -52,8 +52,15 @@ export async function requireAdmin() {
   return session;
 }
 export async function grantQueueAccess(id: string) {
-  const seconds = 60 * 60 * 48;
-  (await cookies()).set(`qflow_queue_${id}`, signToken({ purpose: "queue", id }, seconds), { ...cookieOptions, maxAge: seconds });
+  const seconds = 60 * 60 * 24 * 32;
+  const cookieStore = await cookies();
+  cookieStore.set(`qflow_queue_${id}`, signToken({ purpose: "queue", id }, seconds), { ...cookieOptions, maxAge: seconds });
+  cookieStore.set("qflow_latest_queue", signToken({ purpose: "latest_queue", id }, seconds), { ...cookieOptions, maxAge: seconds });
+}
+export async function getLatestQueueId() {
+  const payload = readToken((await cookies()).get("qflow_latest_queue")?.value);
+  if (payload?.purpose !== "latest_queue" || typeof payload.id !== "string") return null;
+  return (await canReadQueue(payload.id)) ? payload.id : null;
 }
 export async function canReadQueue(id: string) {
   if (!/^[a-f0-9-]{36}$/i.test(id)) return false;

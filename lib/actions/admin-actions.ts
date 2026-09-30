@@ -1,10 +1,12 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { authenticate, requireAdmin } from "@/lib/auth/session";
-import { sheets } from "@/lib/sheets/client";
+import { dbAction } from "@/lib/db/client";
+import { invalidateActiveServices } from "@/lib/queries/services";
 async function manage(table: "services" | "counters", operation: string, args: Record<string, unknown>) {
   await requireAdmin();
-  await sheets("manage", { table, operation, ...args });
+  await dbAction("manage", { table, operation, ...args });
+  if (table === "services") invalidateActiveServices();
   revalidatePath(`/admin/${table}`);
   revalidatePath("/admin/services");
   revalidatePath("/admin/call");
@@ -26,13 +28,12 @@ export async function deleteAllData(password: string): Promise<{ error: string |
     return { error: "รหัสผ่านแอดมินไม่ถูกต้อง" };
   }
   try {
-    await sheets("reset_all");
+    await dbAction("reset_all");
+    invalidateActiveServices();
     revalidatePath("/", "layout");
     return { error: null };
   } catch (error) {
-    if (error instanceof Error && error.message === "Unknown action") {
-      return { error: "Apps Script ยังเป็นเวอร์ชันเก่า กรุณาอัปเดต Code.gs และ Deploy เวอร์ชันใหม่" };
-    }
-    return { error: "ลบข้อมูลไม่สำเร็จ กรุณาตรวจสอบ Apps Script แล้วลองใหม่" };
+    console.error("Failed to reset queue data", error);
+    return { error: "ลบข้อมูลไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่อ Supabase แล้วลองใหม่" };
   }
 }

@@ -8,8 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { deleteAllData } from "@/lib/actions/admin-actions";
+import { useLanguage } from "@/components/language-provider";
+import { localizeError } from "@/lib/i18n";
 
 export function DeleteAllDataButton() {
+  const { t, locale } = useLanguage();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -28,12 +31,12 @@ export function DeleteAllDataButton() {
     startTransition(async () => {
       const result = await deleteAllData(password);
       if (result.error) {
-        setError(result.error);
+        setError(localizeError(result.error, locale));
         return;
       }
       form.reset();
       dialogRef.current?.close();
-      toast.success("ลบข้อมูลทั้งหมดแล้ว");
+      toast.success(t("ลบข้อมูลทั้งหมดแล้ว", "Semua data telah dipadam"));
       router.push("/admin/services");
       router.refresh();
     });
@@ -43,7 +46,7 @@ export function DeleteAllDataButton() {
     <>
       <Button type="button" variant="destructive" size="sm" onClick={openDialog}>
         <Trash2 className="size-4" />
-        ลบข้อมูลทั้งหมด
+        {t("ลบข้อมูลทั้งหมด", "Padam semua data")}
       </Button>
 
       <dialog
@@ -57,15 +60,15 @@ export function DeleteAllDataButton() {
               <TriangleAlert className="size-5" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold">ลบข้อมูลทั้งหมด</h2>
+              <h2 className="text-lg font-semibold">{t("ลบข้อมูลทั้งหมด", "Padam semua data")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                บริการ ช่องเรียกคิว ประวัติคิว และข้อมูลแจ้งเตือนทั้งหมดจะถูกลบถาวรและกู้คืนไม่ได้
+                {t("บริการ ช่องเรียกคิว ประวัติคิว และข้อมูลแจ้งเตือนทั้งหมดจะถูกลบถาวรและกู้คืนไม่ได้", "Perkhidmatan, kaunter, sejarah giliran dan pemberitahuan akan dipadam secara kekal dan tidak boleh dipulihkan")}
               </p>
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="delete-admin-password">รหัสผ่านแอดมิน</Label>
+            <Label htmlFor="delete-admin-password">{t("รหัสผ่านแอดมิน", "Kata laluan pentadbir")}</Label>
             <Input
               id="delete-admin-password"
               name="password"
@@ -86,11 +89,11 @@ export function DeleteAllDataButton() {
               disabled={isPending}
               onClick={() => dialogRef.current?.close()}
             >
-              ยกเลิก
+              {t("ยกเลิก", "Batal")}
             </Button>
             <Button type="submit" variant="destructive" disabled={isPending}>
               {isPending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              ยืนยันลบถาวร
+              {t("ยืนยันลบถาวร", "Sahkan pemadaman kekal")}
             </Button>
           </div>
         </form>

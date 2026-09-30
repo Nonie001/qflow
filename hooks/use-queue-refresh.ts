@@ -6,7 +6,7 @@ export function useQueueRefresh(onChange: () => void) {
   useEffect(() => { callback.current = onChange; }, [onChange]);
   useEffect(() => {
     const refresh = () => { if (document.visibilityState === "visible") callback.current(); };
-    const timer = window.setInterval(refresh, 10_000);
+    const timer = window.setInterval(refresh, 2_000);
     document.addEventListener("visibilitychange", refresh);
     return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", refresh); };
   }, []);

@@ -1,9 +1,12 @@
 import { DisplayBoard } from "@/components/display/display-board";
 import { getQueueMonitorData } from "@/lib/queries/queues";
+import { getLocale } from "@/lib/i18n-server";
+import { translate } from "@/lib/i18n";
 
-export const metadata = {
-  title: "จอแสดงคิว - QFlow",
-};
+export async function generateMetadata() {
+  const locale = await getLocale();
+  return { title: translate(locale, "จอแสดงคิว - QFlow", "Paparan giliran - QFlow") };
+}
 
 export default async function DisplayPage() {
   const { counters, queues } = await getQueueMonitorData();
