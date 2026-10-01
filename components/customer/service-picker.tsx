@@ -12,6 +12,7 @@ import { createQueue } from "@/lib/actions/queue-actions";
 import { addDaysToDate } from "@/lib/utils/date";
 import { formatDate, localizeError, localizeName } from "@/lib/i18n";
 import { useLanguage } from "@/components/language-provider";
+import { useQueueRefresh } from "@/hooks/use-queue-refresh";
 import type { Service } from "@/lib/types/domain";
 
 function StepHeading({ number, title, description }: { number: string; title: string; description: string }) {
@@ -28,6 +29,7 @@ function StepHeading({ number, title, description }: { number: string; title: st
 
 export function ServicePicker({ services, today, lastBookingDate }: { services: Service[]; today: string; lastBookingDate: string }) {
   const router = useRouter();
+  useQueueRefresh(() => router.refresh(), 5_000);
   const { locale, t } = useLanguage();
   const requestRef = useRef<{ key: string; id: string } | null>(null);
   const [isPending, startTransition] = useTransition();

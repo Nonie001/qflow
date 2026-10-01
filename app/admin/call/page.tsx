@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { StaffWorkspace } from "@/components/staff/staff-workspace";
 import { getQueueMonitorData } from "@/lib/queries/queues";
+import { getActiveServices } from "@/lib/queries/services";
 import { getLocale } from "@/lib/i18n-server";
 import { localizeName, translate } from "@/lib/i18n";
 
@@ -12,7 +13,7 @@ export default async function AdminCallQueuePage({
   const query = await searchParams;
   const locale = await getLocale();
   const t = (th: string, ms: string) => translate(locale, th, ms);
-  const { counters, queues } = await getQueueMonitorData();
+  const [{ counters, queues }, services] = await Promise.all([getQueueMonitorData(), getActiveServices()]);
   const requestedCounterId = typeof query.counter === "string" ? query.counter : null;
   const counter = counters.find((item) => item.id === requestedCounterId) ?? counters[0];
 
@@ -29,7 +30,8 @@ export default async function AdminCallQueuePage({
     );
   }
 
-  const waitingQueues = queues.filter((queue) => queue.status === "waiting");
+  const waitingQueues = queues.filter((queue) =>
+    queue.status === "waiting" && counter.service_ids.includes(queue.service_id));
   const currentQueue = queues.find(
     (queue) => queue.counter_id === counter.id && ["called", "serving"].includes(queue.status),
   ) ?? null;
@@ -40,6 +42,7 @@ export default async function AdminCallQueuePage({
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("จัดการคิวหน้าช่อง", "Pengurusan giliran kaunter")}</p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight">{t("เรียกคิว", "Panggil giliran")}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{t("เลือกช่องบริการ แล้วเรียกคิวตามลำดับที่รออยู่", "Pilih kaunter, kemudian panggil giliran mengikut turutan")}</p>
+        <p className="mt-1 text-sm text-primary">{t("ช่องนี้รับ", "Kaunter ini menerima")}: {services.filter((service) => counter.service_ids.includes(service.id)).map((service) => localizeName(service.name, locale)).join(", ") || t("ยังไม่ได้กำหนดบริการ", "Belum ditetapkan")}</p>
         {counters.length > 1 && (
           <div className="mt-5 flex flex-wrap gap-2" aria-label={t("เลือกจุดให้บริการ", "Pilih kaunter")}>
             {counters.map((item) => (

@@ -24,7 +24,7 @@ export function DisplayBoard({ recentCalls, counters }: Props) {
     .map((counter) => ({
       counter,
       queue: recentCalls.find(
-        (q) => q.counter_id === counter.id && (q.status === "called" || q.status === "serving"),
+        (q) => q.counter_id === counter.id && q.status === "called",
       ),
     }))
     .filter((entry) => entry.queue);

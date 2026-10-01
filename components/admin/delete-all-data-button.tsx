@@ -62,7 +62,7 @@ export function DeleteAllDataButton() {
             <div>
               <h2 className="text-lg font-semibold">{t("ลบข้อมูลทั้งหมด", "Padam semua data")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {t("บริการ ช่องเรียกคิว ประวัติคิว และข้อมูลแจ้งเตือนทั้งหมดจะถูกลบถาวรและกู้คืนไม่ได้", "Perkhidmatan, kaunter, sejarah giliran dan pemberitahuan akan dipadam secara kekal dan tidak boleh dipulihkan")}
+                {t("บริการ ช่องเรียกคิว และประวัติคิวทั้งหมดจะถูกลบถาวรและกู้คืนไม่ได้", "Perkhidmatan, kaunter dan sejarah giliran akan dipadam secara kekal dan tidak boleh dipulihkan")}
               </p>
             </div>
           </div>

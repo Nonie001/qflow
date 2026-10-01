@@ -7,6 +7,7 @@ import { addDaysToDate, todayInBangkok } from "@/lib/utils/date";
 type Db = Pool | PoolClient;
 type Arguments = Record<string, unknown>;
 type Booking = { queue: QueueWithRelations; position: number };
+export type CatalogUsage = { serviceIds: string[]; counterIds: string[] };
 
 let pool: Pool | undefined;
 
@@ -30,21 +31,22 @@ async function supabaseAction<T>(action: string, args: Arguments): Promise<T> {
   const baseUrl = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!baseUrl || !key) throw new Error("กรุณาตั้งค่า SUPABASE_URL และ SUPABASE_SERVICE_ROLE_KEY");
-  const response = await fetch(new URL("/rest/v1/rpc/qflow_action", baseUrl), {
+  const counterAction = action === "counter_create" || action === "counter_assign" || action === "call_next" || action === "catalog_usage";
+  const response = await fetch(new URL(counterAction ? "/rest/v1/rpc/qflow_counter_action" : "/rest/v1/rpc/qflow_action", baseUrl), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       apikey: key,
       Authorization: `Bearer ${key}`,
     },
-    body: JSON.stringify({ p_action: action, p_args: args }),
+    body: JSON.stringify({ p_action: action === "counter_create" ? "create" : action === "counter_assign" ? "assign" : action === "catalog_usage" ? "usage" : action, p_args: args }),
     cache: "no-store",
     signal: AbortSignal.timeout(15_000),
   });
   const result = await response.json().catch(() => null) as { code?: string; message?: string } | null;
   if (!response.ok) {
     if (result?.code === "PGRST202" || result?.code === "42883") {
-      throw new Error("กรุณารัน supabase/migrations/001_initial.sql และ 002_api.sql ใน Supabase SQL Editor");
+      throw new Error("กรุณารันไฟล์ migration 001–003 ใน Supabase SQL Editor");
     }
     const error = new Error(result?.message || "เชื่อมต่อ Supabase ไม่สำเร็จ");
     (error as Error & { code?: string }).code = result?.code;
@@ -164,7 +166,6 @@ async function createQueue(args: Arguments): Promise<Booking> {
 
 async function callNext(args: Arguments): Promise<QueueWithRelations | null> {
   const counterId = uuid(args.counterId);
-  const serviceId = args.serviceId ? uuid(args.serviceId) : null;
   return transaction(async client => {
     const [counter] = await rows<Counter>(client,
       "select * from public.counters where id = $1 and is_active = true for update", [counterId]);
@@ -175,12 +176,38 @@ async function callNext(args: Arguments): Promise<QueueWithRelations | null> {
     if (current) return queueById(client, current.id);
     const [next] = await rows<{ id: string }>(client,
       `select id from public.queues where queue_date = ${TODAY} and status = 'waiting'
-       and ($1::uuid is null or service_id = $1) order by created_at, id
-       for update skip locked limit 1`, [serviceId]);
+       and service_id = any($1::uuid[]) order by created_at, id
+       for update skip locked limit 1`, [counter.service_ids]);
     if (!next) return null;
     await client.query("update public.queues set status = 'called', counter_id = $2, called_at = now() where id = $1",
       [next.id, counterId]);
     return queueById(client, next.id);
+  });
+}
+
+function selectedServiceIds(input: unknown): string[] {
+  if (!Array.isArray(input)) throw new Error("กรุณาเลือกบริการที่ช่องนี้รับ");
+  const ids = [...new Set(input.map(uuid))];
+  if (ids.length === 0) throw new Error("กรุณาเลือกบริการที่ช่องนี้รับ");
+  return ids;
+}
+
+async function saveCounterServices(action: "counter_create" | "counter_assign", args: Arguments): Promise<boolean> {
+  const serviceIds = selectedServiceIds(args.serviceIds);
+  return transaction(async client => {
+    const active = await rows<{ id: string }>(client,
+      "select id from public.services where id = any($1::uuid[]) and is_active for share", [serviceIds]);
+    if (active.length !== serviceIds.length) throw new Error("บริการที่เลือกไม่เปิดใช้งาน");
+    if (action === "counter_create") {
+      const name = value(args.name, 100);
+      await client.query("insert into public.counters (id, name, service_ids) values ($1, $2, $3::uuid[])",
+        [randomUUID(), name, serviceIds]);
+    } else {
+      const result = await client.query("update public.counters set service_ids = $2::uuid[] where id = $1",
+        [uuid(args.counterId), serviceIds]);
+      if (!result.rowCount) throw new Error("ไม่พบช่องเรียกคิว");
+    }
+    return true;
   });
 }
 
@@ -313,6 +340,14 @@ async function dispatch(action: string, args: Arguments): Promise<unknown> {
   }
   if (action === "create_queue") return createQueue(args);
   if (action === "call_next") return callNext(args);
+  if (action === "counter_create" || action === "counter_assign") return saveCounterServices(action, args);
+  if (action === "catalog_usage") {
+    const [services, counters] = await Promise.all([
+      rows<{ service_id: string }>(db, "select distinct service_id from public.queues"),
+      rows<{ counter_id: string }>(db, "select distinct counter_id from public.queues where counter_id is not null"),
+    ]);
+    return { serviceIds: services.map((row) => row.service_id), counterIds: counters.map((row) => row.counter_id) };
+  }
   if (action === "transition") return transition(args);
   if (action === "manage") return manage(args);
   if (action === "subscribe") return subscribe(args);

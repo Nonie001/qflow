@@ -13,7 +13,7 @@ try {
   await client.connect();
   await client.query("begin");
   inTransaction = true;
-  for (const name of ["001_initial.sql", "002_api.sql"]) {
+  for (const name of ["001_initial.sql", "002_api.sql", "003_counter_services.sql", "004_realtime.sql"]) {
     const sql = readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8");
     await client.query(sql);
     console.log(`Applied ${name}`);

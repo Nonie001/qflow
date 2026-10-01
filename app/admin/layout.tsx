@@ -4,6 +4,7 @@ import { Monitor } from "lucide-react";
 import { requireAdmin } from "@/lib/auth/session";
 import { SignOutButton } from "@/components/staff/sign-out-button";
 import { AdminNav } from "@/components/admin/admin-nav";
+import { AdminAutoRefresh } from "@/components/admin/admin-auto-refresh";
 import { buttonVariants } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { getLocale } from "@/lib/i18n-server";
@@ -22,6 +23,7 @@ export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
 
   return (
     <div className="flex flex-1 flex-col bg-background">
+      <AdminAutoRefresh />
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/admin" className="flex min-w-0 items-center gap-3">

@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getCustomerQueue } from "@/lib/queries/queues";
 import { QueueStatusPanel } from "@/components/customer/queue-status-panel";
-import { NotificationPrompt } from "@/components/customer/notification-prompt";
+import { QueueImageDownload } from "@/components/customer/queue-image-download";
 import { PublicHeader } from "@/components/public-header";
 import { getLocale } from "@/lib/i18n-server";
 import { translate } from "@/lib/i18n";
@@ -32,6 +32,7 @@ export default async function QueueStatusPage({
         </Link>
         <span className="inline-flex items-center gap-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> {t("อัปเดตอัตโนมัติ", "Kemas kini automatik")}</span>
       </div>
+      <div id="queue-image">
       <div className="mb-7">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("ติดตามสถานะ", "Semak status")}</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{t("คิวของคุณ", "Giliran anda")}</h1>
@@ -39,13 +40,16 @@ export default async function QueueStatusPage({
       </div>
       <div className="space-y-4">
         <QueueStatusPanel
-          key={queue.id}
+          key={`${queue.id}:${queue.status}:${queue.counter_id}:${queue.called_at}:${position}`}
           initialQueue={queue}
           serviceName={queue.service?.name ?? "-"}
           counters={queue.counter ? [queue.counter] : []}
           initialPosition={position}
         />
-        {process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && queue.status === "waiting" && <NotificationPrompt queueId={queue.id} />}
+      </div>
+      </div>
+      <div className="mt-5">
+        <QueueImageDownload queueNumber={queue.queue_number} queueDate={queue.queue_date} />
       </div>
       </main>
     </>

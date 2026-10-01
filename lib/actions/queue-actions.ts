@@ -1,9 +1,7 @@
 "use server";
-import { after } from "next/server";
 import { dbAction } from "@/lib/db/client";
-import { canReadQueue, grantQueueAccess } from "@/lib/auth/session";
+import { grantQueueAccess } from "@/lib/auth/session";
 import { getCustomerQueue } from "@/lib/queries/queues";
-import { notifyQueueCreated, safelyNotify } from "@/lib/notifications/notify";
 import type { Queue } from "@/lib/types/domain";
 import { addDaysToDate, todayInBangkok } from "@/lib/utils/date";
 export interface CreateQueueResult { queue: Queue; position: number }
@@ -24,19 +22,4 @@ export async function getQueueStatus(id: string) {
   const result = await getCustomerQueue(id);
   if (!result) throw new Error("ไม่พบคิวหรือไม่มีสิทธิ์เข้าถึง กรุณาเปิดจากเบราว์เซอร์ที่รับคิว");
   return result;
-}
-export interface PushSubscriptionInput { endpoint: string; p256dh: string; auth: string }
-export async function subscribeToPush(queueId: string, subscription: PushSubscriptionInput): Promise<void> {
-  if (!(await canReadQueue(queueId))) throw new Error("ไม่มีสิทธิ์เข้าถึงคิวนี้");
-  const endpoint = new URL(subscription.endpoint);
-  const host = endpoint.hostname;
-  const allowed = host === "fcm.googleapis.com" || host === "updates.push.services.mozilla.com" ||
-    host.endsWith(".push.services.mozilla.com") || host === "web.push.apple.com" || host.endsWith(".notify.windows.com");
-  if (endpoint.protocol !== "https:" || endpoint.port || endpoint.username || endpoint.password || !allowed) throw new Error("Unsupported push endpoint");
-  if (!/^[A-Za-z0-9_-]{80,100}$/.test(subscription.p256dh) || !/^[A-Za-z0-9_-]{20,30}$/.test(subscription.auth)) throw new Error("Invalid push keys");
-  await dbAction("subscribe", { queueId, ...subscription });
-  after(() => safelyNotify(async () => {
-    const result = await getQueueStatus(queueId);
-    await notifyQueueCreated(result.queue, result.position);
-  }));
 }

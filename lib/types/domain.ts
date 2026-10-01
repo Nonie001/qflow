@@ -24,6 +24,7 @@ export interface Counter {
   name: string;
   is_active: boolean;
   created_at: string;
+  service_ids: string[];
 }
 
 export interface Queue {

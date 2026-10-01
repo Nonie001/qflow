@@ -75,7 +75,7 @@ export function StaffWorkspace({
   }
 
   const handleCallNext = () =>
-    run("call-next", () => callNextQueue(counter.id, counter.name), (queue) => {
+    run("call-next", () => callNextQueue(counter.id), (queue) => {
       if (!queue) {
         toast.info(t("ไม่มีคิวที่รออยู่", "Tiada giliran menunggu"));
         return;
