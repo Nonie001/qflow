@@ -3,7 +3,6 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getCustomerQueue } from "@/lib/queries/queues";
 import { QueueStatusPanel } from "@/components/customer/queue-status-panel";
-import { QueueImageDownload } from "@/components/customer/queue-image-download";
 import { PublicHeader } from "@/components/public-header";
 import { getLocale } from "@/lib/i18n-server";
 import { translate } from "@/lib/i18n";
@@ -32,7 +31,6 @@ export default async function QueueStatusPage({
         </Link>
         <span className="inline-flex items-center gap-2 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-primary" /> {t("อัปเดตอัตโนมัติ", "Kemas kini automatik")}</span>
       </div>
-      <div id="queue-image">
       <div className="mb-7">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">{t("ติดตามสถานะ", "Semak status")}</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{t("คิวของคุณ", "Giliran anda")}</h1>
@@ -46,10 +44,6 @@ export default async function QueueStatusPage({
           counters={queue.counter ? [queue.counter] : []}
           initialPosition={position}
         />
-      </div>
-      </div>
-      <div className="mt-5">
-        <QueueImageDownload queueNumber={queue.queue_number} queueDate={queue.queue_date} />
       </div>
       </main>
     </>

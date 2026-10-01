@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, Clock, PhoneCall, UserCheck, XCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { QueueStatusBadge } from "@/components/queue-status-badge";
+import { QueueImageDownload } from "@/components/customer/queue-image-download";
 import { getQueueStatus } from "@/lib/actions/queue-actions";
 import type { Counter, Queue } from "@/lib/types/domain";
 import { todayInBangkok } from "@/lib/utils/date";
@@ -76,7 +77,7 @@ export function QueueStatusPanel({
           {t("อัปเดตไม่สำเร็จ กำลังลองใหม่ ข้อมูลที่แสดงอาจไม่ใช่สถานะล่าสุด", "Kemas kini gagal. Sedang mencuba lagi; status yang dipaparkan mungkin bukan yang terkini")}
         </p>
       )}
-      <Card className="overflow-hidden border-[#155b3e] py-0 shadow-[0_25px_60px_-40px_rgba(10,63,39,0.65)]">
+      <Card id="queue-image" className="overflow-hidden border-[#155b3e] py-0 shadow-[0_25px_60px_-40px_rgba(10,63,39,0.65)]">
         <CardContent className="px-0">
           <div className="flex items-center justify-between gap-3 bg-[#104f36] px-6 py-4 text-white sm:px-8">
             <span className="inline-flex items-center gap-2 text-sm font-semibold"><span className="size-2 rounded-full bg-[#e9be4c]" /> {t("หมายเลขคิวของคุณ", "Nombor giliran anda")}</span>
@@ -101,6 +102,7 @@ export function QueueStatusPanel({
           </div>
         </CardContent>
       </Card>
+      <QueueImageDownload queueNumber={queue.queue_number} queueDate={queue.queue_date} />
 
       {queue.status === "waiting" && isPastBooking && (
         <Card className="border-warning/40 bg-[#fff9ec] shadow-none">

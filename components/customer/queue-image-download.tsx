@@ -19,12 +19,9 @@ export function QueueImageDownload({ queueNumber, queueDate }: { queueNumber: st
       await document.fonts.ready;
       const { toPng } = await import("html-to-image");
       const image = await toPng(ticket, {
-        backgroundColor: "#f7faf7",
+        backgroundColor: "#ffffff",
         cacheBust: true,
         pixelRatio: 2,
-        width: ticket.scrollWidth + 48,
-        height: ticket.scrollHeight + 48,
-        style: { boxSizing: "border-box", padding: "24px" },
       });
       const link = document.createElement("a");
       link.download = `qflow-${queueNumber.replace(/[^A-Za-z0-9-]/g, "")}-${queueDate}.png`;

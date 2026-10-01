@@ -80,15 +80,15 @@ export function DisplayBoard({ recentCalls, counters }: Props) {
       )}
 
       {recentCalls.length > 0 && <div className="mt-4 shrink-0 border-t border-border pt-3 sm:mt-5">
-        <h2 className="mb-2 text-xs font-semibold text-muted-foreground sm:text-sm">{t("เรียกล่าสุด", "Panggilan terkini")}</h2>
+        <h2 className="mb-2 text-sm font-semibold text-muted-foreground sm:mb-3 sm:text-base xl:text-lg">{t("เรียกล่าสุด", "Panggilan terkini")}</h2>
         <div className="flex min-w-0 gap-2 overflow-hidden sm:gap-3">
           {recentCalls.slice(0, 5).map((q) => (
             <div
               key={q.id}
-              className="min-w-0 flex-1 truncate rounded-xl border border-border bg-white px-3 py-2 text-base font-bold text-primary tabular-nums sm:px-4 sm:text-lg"
+              className="min-w-0 flex-1 truncate rounded-xl border border-border bg-white px-3 py-3 text-xl font-bold text-primary tabular-nums sm:px-5 sm:py-4 sm:text-2xl xl:text-3xl"
             >
               {q.queue_number}
-              <span className="ml-2 text-xs font-normal text-muted-foreground sm:text-sm">
+              <span className="ml-2 text-sm font-normal text-muted-foreground sm:text-base xl:text-lg">
                 {q.customer_name || t("ไม่ระบุชื่อ", "Tiada nama")} · {q.service?.name ? localizeName(q.service.name, locale) : t("บริการ", "Perkhidmatan")} · {localizeName(q.counter?.name, locale)}
               </span>
             </div>
